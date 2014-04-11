@@ -1,0 +1,98 @@
+<div class="global-warning" style="display:none;">Please put all this in Jira's announcement banner</div>
+<SCRIPT LANGUAGE="JavaScript" TYPE="text/javascript">
+<!--
+
+/**********
+Do the dance, transform customfield multiselects to autocomplete
+**********/
+
+var customMultiselectAutocompleteConfig = {
+	noValueLabel : 'Aucun',
+	enableSummaryTextCheck : true,
+	chosenJSUri : 'http://cdnjs.cloudflare.com/ajax/libs/chosen/1.0/chosen.jquery.min.js',
+	chosenCSSUri : 'http://cdnjs.cloudflare.com/ajax/libs/chosen/1.0/chosen.min.css',
+	chosenConfig : {
+		no_results_text: "Aucun résultat : ",
+		placeholder_text_multiple: " ",
+		single_backstroke_delete: true,
+		display_selected_options: false,
+		search_contains: true
+		}
+};
+
+AJS.$(function() {
+	JIRA.bind(JIRA.Events.NEW_CONTENT_ADDED, function(e, context, reason) {
+		if (reason == JIRA.CONTENT_ADDED_REASON.inlineEditStarted) {
+			customMultiselectAutocompleteLoader();
+		}
+	});
+	JIRA.bind(JIRA.Events.NEW_PAGE_ADDED, function(e, context, reason) {
+			customMultiselectAutocompleteLoader();
+	});
+
+	function customMultiselectAutocompleteLoader()
+	{
+		if(customMultiselectAutocompleteConfig['enableSummaryTextCheck'] == true)
+		{
+			// trigger fields updates on summary blur
+			jQuery('#summary').blur(function(){
+				// lets work with all lowercase text
+				var summaryText = jQuery('#summary').val().toLowerCase();
+				// foreach multiselect customfield
+				jQuery("select[id^='customfield'][multiple='multiple']")
+					.each(function(){
+						var itemsadded = false;
+						var currentMultiselect = jQuery(this);
+						
+						// look in every option
+						jQuery('option',this)
+							.each(function(){
+								// if this value is found in summary
+								if(summaryText.indexOf(jQuery(this).text().trim().toLowerCase())>=0)
+								{
+									console.log('Found : '+jQuery(this).text().trim());
+									jQuery(currentMultiselect).find('option[value='+jQuery(this).val()+']').attr('selected', true);
+									itemsadded = true;
+								}
+							});
+						if(itemsadded == true){ jQuery('option[value=-1]',this).attr('selected', false); }
+						jQuery(this).trigger('chosen:updated');
+					});
+			});
+		}
+		// chargement de chosen sur les champs concernés
+		console.log('Chosen : Loaded from triggered content context');
+		jQuery.getScript(customMultiselectAutocompleteConfig['chosenJSUri'], function(data, textStatus, jqxhr) {
+			jQuery("select[id^='customfield'][multiple='multiple'] option[value=-1]").html('Aucun');
+			jQuery("select[id^='customfield'][multiple='multiple']").data('chosen', null);
+			jQuery("select[id^='customfield'][multiple='multiple']")
+				.chosen(customMultiselectAutocompleteConfig['chosenConfig'])
+				.change(function() {
+					console.log(jQuery(this).val());
+					if (jQuery(this).val()!=null){
+						if(jQuery(this).val().length>1 && jQuery(this).val()[0] == '-1'){jQuery('#'+jQuery(this).attr("id")+' option[value=-1]').prop('selected', false).trigger("chosen:updated");}
+					} else { jQuery('#'+jQuery(this).attr("id")+' option[value=-1]').prop('selected', true).trigger("chosen:updated"); }
+				});
+		}).fail(function( jqxhr, settings, exception ){ console.log('Unable to load chosen on custom multiselect fields'); });
+		if(jQuery('body').size()>0){if (document.createStyleSheet){document.createStyleSheet(customMultiselectAutocompleteConfig['chosenCSSUri']);}
+		else {jQuery('head').append(jQuery('<link rel="stylesheet" href="'+customMultiselectAutocompleteConfig['chosenCSSUri']+'" type="text/css" media="screen" />'));}}
+	} // fin customMultiselectAutocompleteLoader
+	
+	// replacing jira's blur on multiselects
+	var myMultiSelectBlurTrigger = function (e,i){
+		i=i.nextAll('.save-options').andSelf();var h=':input, a[href], [tabindex]';var g;var f=b(i);var d={focus:function(){if(!f){f=true;JIRA.trigger(JIRA.Events.INLINE_EDIT_FOCUSED,[e])}},blur:function(){if(g){clearTimeout(g)}g=setTimeout(c,JIRA.Issues.InlineEdit.BLUR_FOCUS_TIMEOUT)}};i.attr('tabindex',1).bind(d).delegate(h,d);
+		function c(){if(!b(i)){f=false;
+			if (AJS.$('#'+i).parent().find("select[id^='"+i+"'][multiple='multiple']")){ console.log('Yeay!'); }
+			else { console.log('multiselect not found'); JIRA.trigger(JIRA.Events.INLINE_EDIT_BLURRED,[e]); }
+		}}};
+	try {
+		JIRA.Issues.InlineEdit.BlurTriggerMapping.custom['com.atlassian.jira.plugin.system.customfieldtypes:multiselect'] = myMultiSelectBlurTrigger;
+	}
+	catch(err)
+	{ console.log('No inline edit here'); }
+	
+	// do the dance :)
+	customMultiselectAutocompleteLoader();
+});
+-->
+</SCRIPT>
