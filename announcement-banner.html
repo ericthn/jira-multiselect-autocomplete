@@ -63,7 +63,7 @@ AJS.$(function() {
 		// chargement de chosen sur les champs concernés
 		console.log('Chosen : Loaded from triggered content context');
 		jQuery.getScript(customMultiselectAutocompleteConfig['chosenJSUri'], function(data, textStatus, jqxhr) {
-			jQuery("select[id^='customfield'][multiple='multiple'] option[value=-1]").html('Aucun');
+			jQuery("select[id^='customfield'][multiple='multiple'] option[value=-1]").html(customMultiselectAutocompleteConfig['noValueLabel']);
 			jQuery("select[id^='customfield'][multiple='multiple']").data('chosen', null);
 			jQuery("select[id^='customfield'][multiple='multiple']")
 				.chosen(customMultiselectAutocompleteConfig['chosenConfig'])
